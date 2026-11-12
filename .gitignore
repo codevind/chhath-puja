@@ -2,3 +2,6 @@ node_modules/
 dist/
 .env
 .env.local
+.env.*.local
+*.log
+github_pat_11CU2IHYY0CGehqp36y3jU_EFmYI8sJdtmzsUjQXNh1sV90jWTIJMxx65EBSGWm7ktLOGAS6IUDxu6sBq 
