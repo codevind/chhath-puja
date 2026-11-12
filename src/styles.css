@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box}
+html{min-width:320px;background:#fff9ef}
+body{margin:0;font-family:'DM Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid #d99a4b;outline-offset:3px}
+::selection{background:#f5d29b;color:#4b2c1b}
