@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Chhath Puja Samiti
 
 A responsive React + TypeScript website with:
@@ -59,3 +60,6 @@ Vercel will provide a public HTTPS URL. You can later connect a custom domain.
 ## Privacy
 
 Photographs are processed locally in the visitor's browser and are not sent to a backend. The site does not collect UPI PINs or bank credentials.
+=======
+# chhath-puja
+>>>>>>> 5fb53f0f2f1eca050ab025b8cec36628a45d2cff
