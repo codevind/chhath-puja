@@ -5,6 +5,12 @@ import { QRCodeSVG } from "qrcode.react";
 import { jsPDF } from "jspdf";
 import { Users } from "lucide-react";
 import Contributors from "./components/Contributors";
+import VisitCounter from "./components/VisitCounter";
+import HeroSlideshow from "./components/HeroSlideshow";
+import ChhathCountdown from "./components/ChhathCountdown";
+import type { Contributor } from "./components/Contributors";
+import AdminSection, { adminRequest } from "./components/AdminSection";
+import { normalizeMobileNumber } from "./utils/mobileNumber";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -16,7 +22,6 @@ import {
   IndianRupee,
   ShieldCheck,
   Sparkles,
-  Sun,
   X,
 } from "lucide-react";
 import { SITE_CONFIG } from "./config";
@@ -29,18 +34,46 @@ type Page = "home" | "badge" | "donate"| "contributors";;
 
 const Shell = styled.div`
   min-height: 100vh;
-  background: #fff9ef;
-  color: #402516;
+  background:
+    radial-gradient(ellipse at 0% 12%, #f7b53f20, transparent 42%),
+    radial-gradient(ellipse at 100% 52%, #e86e2610, transparent 42%),
+    var(--puja-bg);
+  color: var(--puja-text);
 `;
 
-const Header = styled.header`
+const TopVisual = styled.div<{ $preview: boolean }>`
+  ${(p) => p.$preview && `
+    background:
+      linear-gradient(180deg, #32150c55 0%, #32150c08 35%, #32150c66 100%),
+      url("/templates/Header%20background.jpg") center 45% / cover no-repeat;
+  `}
+`;
+
+const HeroStage = styled.div`
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 18px 22px 32px;
+`;
+
+const Header = styled.header<{ $imageBackdrop?: boolean }>`
+  position: relative;
   min-height: 76px;
   padding: 12px clamp(18px, 5vw, 72px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #713d20;
+  background:
+    radial-gradient(circle at 12% 130%, #f4b53f33, transparent 34%),
+    linear-gradient(110deg, #7d201c, #a43b1d 60%, #84231c);
   color: #fff8e9;
+  border-bottom: 4px solid var(--puja-gold);
+  box-shadow: 0 4px 18px #7d201c1c;
+  ${(p) => p.$imageBackdrop && `
+    background: transparent;
+    border-bottom: 0;
+    box-shadow: none;
+    text-shadow: 0 2px 8px #30140ccc;
+  `}
 `;
 
 const Brand = styled.div`
@@ -50,60 +83,59 @@ const Brand = styled.div`
 `;
 
 const BrandIcon = styled.div`
-  width: 42px;
-  height: 42px;
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
   border-radius: 14px;
-  background: #f5c477;
-  color: #713d20;
+  background: white;
+  overflow: hidden;
+  border: 1px solid #ffe8a9;
+  box-shadow: 0 0 0 4px #ffc9631a;
+  color: var(--puja-heading);
   display: grid;
   place-items: center;
+  img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  @media (max-width: 480px) { width: 50px; height: 50px; }
 `;
 
 const BrandTitle = styled.div`
   font-family: Georgia, serif;
-  font-size: clamp(18px, 2.4vw, 24px);
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.3;
   font-weight: 700;
 `;
 
 const HeaderTag = styled.span`
-  font-size: 12px;
-  color: #f6d7ae;
-  letter-spacing: 0.08em;
+  display: block;
+  margin-top: 5px;
+  font-family: Georgia, serif;
+  font-size: clamp(14px, 1.8vw, 19px);
+  line-height: 1.5;
+  color: #ffe0a0;
+  letter-spacing: 0.02em;
+`;
+
+const AdminButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #f6d7ae66;
+  border-radius: 10px;
+  color: #fff8e9;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover { background: #fff0bf18; border-color: #ffe0a0; }
+  &:disabled { opacity: .6; cursor: wait; }
+  @media (max-width: 480px) { padding: 9px; span { display: none; } }
 `;
 
 const Main = styled.main`
   max-width: 1120px;
   margin: 0 auto;
   padding: 30px 22px 70px;
-`;
-
-const Hero = styled.section`
-  overflow: hidden;
-  border-radius: 28px;
-  position: relative;
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(55, 29, 13, 0.84),
-      rgba(55, 29, 13, 0.24)
-    ),
-    url("/templates/hero-cover.png") center / cover no-repeat,
-    #9c5525;
-
-  @media (max-width: 640px) {
-    min-height: 260px;
-  }
-`;
-
-const HeroContent = styled.div`
-  padding: clamp(28px, 6vw, 64px);
-  max-width: 680px;
-  color: #fff8e9;
 `;
 
 // const Eyebrow = styled.div`
@@ -124,7 +156,7 @@ const HeroContent = styled.div`
 // const HeroText = styled.p`
 //   font-size: clamp(14px, 2vw, 17px);
 //   line-height: 1.75;
-//   color: #fff0d8;
+//   color: var(--puja-gold-soft);
 //   max-width: 510px;
 //   margin: 0;
 // `;
@@ -138,11 +170,20 @@ const WelcomeTitle = styled.h2`
   font-family: Georgia, serif;
   font-size: clamp(26px, 4vw, 36px);
   margin: 0 0 8px;
-  color: #713d20;
+  color: var(--puja-heading);
+  &::after {
+    content: "";
+    display: block;
+    width: 90px;
+    height: 3px;
+    margin: 16px auto 0;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #f4b53f33, #dc761e, #f4b53f33);
+  }
 `;
 
 const Muted = styled.p`
-  color: #8b6a4d;
+  color: var(--puja-muted);
   line-height: 1.65;
   margin: 0;
 `;
@@ -150,7 +191,7 @@ const Muted = styled.p`
 
 const ActionGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   max-width: 1100px;
   margin: 0 auto;
@@ -163,17 +204,18 @@ const ActionGrid = styled.div`
 
 const ActionCard = styled.button<{ $accent?: boolean }>`
   border: 1px solid
-    ${(p) => (p.$accent ? "#cce0c9" : "#ead6b9")};
+    ${(p) => (p.$accent ? "#cce0c9" : "var(--puja-border)")};
   border-radius: 22px;
   padding: 24px;
-  background: #fff;
+  background: linear-gradient(135deg, var(--puja-surface) 65%, #fff0cc);
+  box-shadow: 0 4px 16px #a45d1410;
   display: flex;
   align-items: center;
   gap: 18px;
   text-align: left;
   cursor: pointer;
   min-height: 126px;
-  color: #4b2c1b;
+  color: var(--puja-text);
   transition: transform 0.18s, box-shadow 0.18s;
 
   &:hover {
@@ -189,8 +231,8 @@ const ActionIcon = styled.div<{ $green?: boolean }>`
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  background: ${(p) => (p.$green ? "#eaf4e8" : "#fff0d8")};
-  color: ${(p) => (p.$green ? "#347342" : "#a45a18")};
+  background: ${(p) => (p.$green ? "#eaf4e8" : "var(--puja-gold-soft)")};
+  color: ${(p) => (p.$green ? "var(--puja-leaf)" : "var(--puja-primary)")};
 `;
 
 const ActionTitle = styled.div`
@@ -201,27 +243,29 @@ const ActionTitle = styled.div`
 
 const ActionDesc = styled.div`
   font-size: 13px;
-  color: #8a7058;
+  color: var(--puja-muted);
   line-height: 1.5;
 `;
 
 const CardArrow = styled.div`
   margin-left: auto;
-  color: #a45a18;
+  color: var(--puja-primary);
 `;
 
 const Footer = styled.footer`
   text-align: center;
   padding: 22px;
-  color: #9a8066;
+  color: var(--puja-muted);
   font-size: 12px;
+  border-top: 1px solid var(--puja-border);
+  background: linear-gradient(180deg, #fff3d599, #ffe9b477);
 `;
 
 const Panel = styled.section`
   max-width: 760px;
   margin: 8px auto;
-  background: #fff;
-  border: 1px solid #ecdcc5;
+  background: var(--puja-surface);
+  border: 1px solid var(--puja-border);
   border-radius: 24px;
   padding: clamp(20px, 4vw, 34px);
   box-shadow: 0 12px 35px #67401a0b;
@@ -233,7 +277,7 @@ const Back = styled.button`
   gap: 8px;
   border: 0;
   background: transparent;
-  color: #86532e;
+  color: var(--puja-primary);
   font-weight: 650;
   padding: 8px 0 18px;
   cursor: pointer;
@@ -243,7 +287,7 @@ const PanelTitle = styled.h2`
   font-family: Georgia, serif;
   font-size: 30px;
   margin: 0 0 8px;
-  color: #713d20;
+  color: var(--puja-heading);
 `;
 
 const Field = styled.label`
@@ -256,16 +300,16 @@ const Field = styled.label`
 
 const Input = styled.input`
   width: 100%;
-  border: 1px solid #e3d2bb;
+  border: 1px solid var(--puja-border);
   border-radius: 12px;
   padding: 13px 14px;
   font: inherit;
-  color: #402516;
-  background: #fffdf9;
+  color: var(--puja-text);
+  background: var(--puja-surface);
   outline: none;
 
   &:focus {
-    border-color: #b77739;
+    border-color: var(--puja-focus);
     box-shadow: 0 0 0 3px #b7773920;
   }
 `;
@@ -279,7 +323,7 @@ const Upload = styled.label`
   min-height: 140px;
   border: 1.5px dashed #c8a77e;
   border-radius: 16px;
-  background: #fffbf4;
+  background: var(--puja-surface-soft);
   color: #81502d;
   cursor: pointer;
   text-align: center;
@@ -300,7 +344,8 @@ const Primary = styled.button`
   border-radius: 13px;
   padding: 14px 18px;
   margin-top: 20px;
-  background: #8a4b22;
+  background: var(--puja-primary-gradient);
+  box-shadow: 0 5px 14px #962b1c20;
   color: white;
   font-weight: 750;
   font-size: 15px;
@@ -317,18 +362,18 @@ const Secondary = styled.button`
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid #dfc7a8;
+  border: 1px solid var(--puja-border);
   border-radius: 12px;
   padding: 12px 16px;
-  background: #fffaf2;
-  color: #71421f;
+  background: var(--puja-surface-soft);
+  color: var(--puja-heading);
   font-weight: 700;
   cursor: pointer;
 `;
 
 const PreviewWrap = styled.div`
   margin-top: 22px;
-  background: #fff8ec;
+  background: var(--puja-surface-soft);
   border-radius: 16px;
   padding: 14px;
   text-align: center;
@@ -354,14 +399,14 @@ const ButtonRow = styled.div`
 
 const Note = styled.div`
   font-size: 12px;
-  color: #90765e;
+  color: var(--puja-muted);
   line-height: 1.6;
   margin-top: 12px;
 `;
 
 const DonationBox = styled.div`
-  background: #f5faef;
-  border: 1px solid #d9e9d2;
+  background: linear-gradient(135deg, #fff9e8, var(--puja-gold-soft));
+  border: 1px solid var(--puja-border);
   border-radius: 18px;
   padding: 22px;
   text-align: center;
@@ -447,6 +492,34 @@ function drawCircularPhoto(
 ============================================ */
 
 function App() {
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<Contributor | null>(null);
+  const [savedEntry, setSavedEntry] = useState<Contributor | null>(null);
+  const [donorName, setDonorName] = useState("");
+  const [donorMobile, setDonorMobile] = useState("");
+  const [donorAmount, setDonorAmount] = useState("");
+  const [donation, setDonation] = useState<Contributor | null>(null);
+  const [donationAttempt, setDonationAttempt] = useState<{ requestId: string; name: string; mobileNumber: string; amount: number } | null>(null);
+  const [savingDonation, setSavingDonation] = useState(false);
+  const [adminToken, setAdminToken] = useState(() => {
+    try { return localStorage.getItem("samiti-admin-token") || ""; }
+    catch { return ""; }
+  });
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+
+  const loginAdmin = (token: string) => {
+    setAdminToken(token);
+    try { localStorage.setItem("samiti-admin-token", token); } catch { /* Keep the in-memory session. */ }
+  };
+  const logoutAdmin = async () => {
+    setLoggingOut(true); setLogoutError("");
+    try {
+      await adminRequest({ action: "logout", token: adminToken });
+      setAdminToken("");
+      try { localStorage.removeItem("samiti-admin-token"); } catch { /* Storage may be unavailable. */ }
+    } finally { setLoggingOut(false); }
+  };
   const [page, setPage] = useState<Page>("home");
 
   const [name, setName] = useState("");
@@ -464,10 +537,11 @@ function App() {
       pn: SITE_CONFIG.payeeName,
       tn: SITE_CONFIG.donationNote,
       cu: "INR",
+      ...(donation ? { am: donation.amount.toFixed(2), tr: donation.receiptId.replace(/^CPS-/, "").replace(/-/g, "") } : {}),
     });
 
     return `upi://pay?${params.toString()}`;
-  }, []);
+  }, [donation]);
 
   // Release object URLs when replaced or unmounted.
   useEffect(() => {
@@ -730,6 +804,32 @@ function App() {
     window.location.href = upiLink;
   };
 
+  const proceedDonation = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (savingDonation) return;
+    setError("");
+    const amount = Number(donorAmount);
+    if (!donorName.trim() || !Number.isFinite(amount) || amount <= 0 || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.00001) {
+      setError("Enter your name and an amount greater than zero, with up to two decimal places.");
+      return;
+    }
+    if (!upiConfigured) { setError("Payments are not configured yet. Please try again later."); return; }
+    let mobileNumber: string;
+    try { mobileNumber = normalizeMobileNumber(donorMobile); }
+    catch (err) { setError(err instanceof Error ? err.message : "Invalid mobile number."); return; }
+    const attempt = donationAttempt ?? { requestId: crypto.randomUUID(), name: donorName.trim(), mobileNumber, amount };
+    setDonationAttempt(attempt);
+    setSavingDonation(true);
+    try {
+      const result = await adminRequest({ action: "donate", ...attempt });
+      if (!result.receiptId || !result.date || !result.time) throw new Error("Entry could not be confirmed. Please click Proceed again to retry safely.");
+      const entry = { receiptId: result.receiptId, name: attempt.name, mobileNumber: attempt.mobileNumber, amount: attempt.amount, mode: "Online", status: "verify", date: result.date, time: result.time };
+      setDonation(entry); setSavedEntry(entry);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save your entry. Please retry.");
+    } finally { setSavingDonation(false); }
+  };
+
   const goHome = () => {
     setPage("home");
     setError("");
@@ -741,10 +841,11 @@ function App() {
 
   return (
     <Shell>
-      <Header>
+      <TopVisual $preview={SITE_CONFIG.imageHeaderPreview}>
+      <Header $imageBackdrop={SITE_CONFIG.imageHeaderPreview}>
         <Brand>
           <BrandIcon>
-            <Sun size={25} />
+            <img src="/templates/Logo.jpg" alt="Chhath Puja Samiti logo" />
           </BrandIcon>
 
           <div>
@@ -758,6 +859,13 @@ function App() {
           </div>
         </Brand>
 
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginLeft: 12 }}>
+          <AdminButton type="button" aria-label={adminToken ? "Open admin section" : "Admin login"} title={adminToken ? "Open admin section" : "Admin login"} onClick={() => setAdminOpen(true)}>
+            <ShieldCheck size={20} /><span>{adminToken ? "Admin" : "Admin login"}</span>
+          </AdminButton>
+          {adminToken && <AdminButton type="button" disabled={loggingOut} onClick={() => {
+            void logoutAdmin().catch(() => setLogoutError("Unable to log out. Please try again."));
+          }}>{loggingOut ? "Logging out..." : "Logout"}</AdminButton>}
         {page !== "home" && (
           <button
             type="button"
@@ -773,40 +881,26 @@ function App() {
             <X size={22} />
           </button>
         )}
+        </div>
       </Header>
+      {page === "home" && SITE_CONFIG.imageHeaderPreview && <HeroStage><HeroSlideshow imageBackdrop /></HeroStage>}
+      </TopVisual>
+      {logoutError && <ErrorText role="alert">{logoutError}</ErrorText>}
 
       <Main>
         {/* HOME PAGE */}
 
         {page === "home" && (
           <>
-            <Hero>
-              <HeroContent>
-                {/* <Eyebrow>
-                  Festival of faith & gratitude
-                </Eyebrow> */}
-{/* 
-                <HeroTitle>
-                  जय छठी मैया
-                </HeroTitle>
-
-                <HeroText>
-                  छठी मैया के पावन पर्व पर आपका
-                  हार्दिक स्वागत है।
-                  Celebrate the spirit of devotion,
-                  unity and gratitude.
-                </HeroText> */}
-              </HeroContent>
-            </Hero>
+            {!SITE_CONFIG.imageHeaderPreview && <HeroSlideshow />}
 
             <Welcome>
               <WelcomeTitle>
-                Maa Kamleshwari Chhath Puja Samiti
+                छठ महापर्व पूजनोत्सव - 2026
               </WelcomeTitle>
+              <ChhathCountdown />
 
-              <Muted>
-                Choose how you would like to participate.
-              </Muted>
+           
             </Welcome>
 
             <ActionGrid>
@@ -822,12 +916,14 @@ function App() {
 
                 <div>
                   <ActionTitle>
-                    Generate Your Badge
+                    Generate Your Badge - अपना बैज जनरेट करें
                   </ActionTitle>
 
                   <ActionDesc>
-                    Create and download your personalized
+                    Upload your photo & name and download your personalized
                     Chhath Puja badge.
+                    <br/>अपनी फोटो और नाम अपलोड करें और अपना पर्सनलाइज़्ड
+                    छठ पूजा बैज डाउनलोड करें।
                   </ActionDesc>
                 </div>
 
@@ -840,6 +936,10 @@ function App() {
                 $accent
                 onClick={() => {
                   setPage("donate");
+                  if (donation) {
+                    setDonation(null); setDonationAttempt(null);
+                    setDonorName(""); setDonorMobile(""); setDonorAmount("");
+                  }
                   setError("");
                 }}
               >
@@ -849,13 +949,14 @@ function App() {
 
                 <div>
                   <ActionTitle>
-                    Donate
+                    Contribute - चंदा
                   </ActionTitle>
 
-                  <ActionDesc>
-                    Support the Chhath Puja celebrations
-                    with a voluntary contribution.
-                  </ActionDesc>
+                 
+                    
+                    <ActionDesc> Support the Chhath Puja celebrations with a voluntary contribution. <br /> स्वैच्छिक योगदान देकर छठ पूजा के आयोजन में सहयोग करें। </ActionDesc>
+
+               
                 </div>
 
                 <CardArrow>
@@ -879,8 +980,8 @@ function App() {
     </ActionTitle>
 
     <ActionDesc>
-      View the list of people who have
-      contributed to Chhath Puja.
+View Contribution Detail & Download your receipt
+<br/>योगदान का विवरण देखें और अपनी रसीद डाउनलोड करें
     </ActionDesc>
   </div>
 
@@ -889,6 +990,14 @@ function App() {
   </CardArrow>
 </ActionCard>
 
+              <ActionCard onClick={() => setAdminOpen(true)}>
+                <ActionIcon><ShieldCheck size={28} /></ActionIcon>
+                <div>
+                  <ActionTitle>Admin Section</ActionTitle>
+                  <ActionDesc>Sign in to add contribution entries.</ActionDesc>
+                </div>
+                <CardArrow><ChevronRight /></CardArrow>
+              </ActionCard>
             </ActionGrid>
           </>
         )}
@@ -948,7 +1057,7 @@ function App() {
                 <span
                   style={{
                     fontSize: 12,
-                    color: "#92765b",
+                    color: "var(--puja-muted)",
                   }}
                 >
                   JPG, PNG or WEBP · Maximum 10 MB
@@ -1052,7 +1161,7 @@ function App() {
                     height: 62,
                     borderRadius: 20,
                     background: "#eaf4e8",
-                    color: "#347342",
+                    color: "var(--puja-leaf)",
                   }}
                 >
                   <Heart size={30} />
@@ -1061,7 +1170,7 @@ function App() {
                 <PanelTitle
                   style={{ marginTop: 14 }}
                 >
-                  Support Chhath Puja
+                  Contribution - Chhath Puja 2026
                 </PanelTitle>
 
                 <Muted>
@@ -1070,10 +1179,18 @@ function App() {
                 </Muted>
               </div>
 
+              {!donation ? <form onSubmit={proceedDonation}>
+                <Field>Name<Input required maxLength={100} autoComplete="name" value={donorName} readOnly={savingDonation || Boolean(donationAttempt)} onChange={(e) => setDonorName(e.target.value)} placeholder="Enter your full name" /></Field>
+                <Field>Mobile number (optional)<Input type="tel" autoComplete="tel" maxLength={20} value={donorMobile} readOnly={savingDonation || Boolean(donationAttempt)} onChange={(e) => setDonorMobile(e.target.value)} placeholder="10-digit number or +91" /></Field>
+                <Field>Amount (INR)<Input required type="number" min="0.01" step="0.01" value={donorAmount} readOnly={savingDonation || Boolean(donationAttempt)} onChange={(e) => setDonorAmount(e.target.value)} placeholder="Enter your contribution amount" /></Field>
+                <Primary type="submit" disabled={savingDonation}>{savingDonation ? "Saving your entry..." : "Proceed"}</Primary>
+                <Note>No login required. Your entry will await payment verification. Proceeding does not make a payment.</Note>
+                {donationAttempt && !savingDonation && <Note>If the connection failed, click Proceed again to confirm the same entry without creating a duplicate.</Note>}
+              </form> : <>
               <DonationBox>
                 <IndianRupee
                   size={28}
-                  color="#347342"
+                  color="var(--puja-leaf)"
                 />
 
                 <div
@@ -1083,17 +1200,16 @@ function App() {
                     marginTop: 6,
                   }}
                 >
-                  Contribute any amount
+                  You are contributing {donation.amount.toLocaleString("en-IN", { style: "currency", currency: "INR" })}
                 </div>
 
                 <Muted>
-                  Enter your preferred amount
-                  in your UPI app.
+                  Thank you, {donation.name}. Your entry is awaiting verification.
                 </Muted>
 
                 <Primary onClick={startDonate}>
                   <Heart size={17} />
-                  Donate via UPI
+                  Pay by UPI
                 </Primary>
 
                 {!upiConfigured && (
@@ -1105,6 +1221,9 @@ function App() {
                 )}
 
                 <Note>
+                  On a phone, Pay by UPI opens a compatible payment app.
+                  On a computer, scan the QR code with your phone.
+                  {" "}
                   Payment is completed only after
                   you review the details and authorize
                   it in your UPI app.
@@ -1136,11 +1255,13 @@ function App() {
                   <Note>
                     Scan this QR code using a
                     compatible UPI app.
-                    Enter your preferred amount
-                    before making payment.
+                    The contribution amount is included in this QR code.
                   </Note>
                 </div>
               )}
+              <Note>Reference: {donation.receiptId}. Status: Verify. Opening a UPI app or scanning the QR does not confirm payment.</Note>
+              <Secondary style={{ marginTop: 16 }} onClick={() => { setDonation(null); setDonationAttempt(null); setDonorName(""); setDonorMobile(""); setDonorAmount(""); setError(""); }}>Start another contribution</Secondary>
+              </>}
 
               {error && (
                 <ErrorText>{error}</ErrorText>
@@ -1158,7 +1279,7 @@ function App() {
 
     <Panel>
       <PanelTitle>
-        Our Contributors
+        Our Contributors - हमारे योगदानकर्ता
       </PanelTitle>
 
       <Muted>
@@ -1166,17 +1287,26 @@ function App() {
         Maa Kamleshwari Chhath Puja Samiti.
       </Muted>
 
-      <Contributors />
+      <Contributors isAdmin={Boolean(adminToken)} savedEntry={savedEntry} onEdit={(entry) => {
+        if (!adminToken) return;
+        setEditingEntry(entry); setAdminOpen(true);
+      }} />
     </Panel>
   </>
 )}
 
       </Main>
+      {adminOpen && <AdminSection entry={editingEntry} onSaved={setSavedEntry} token={adminToken} onLogin={loginAdmin} onLogout={logoutAdmin} onClose={() => { setAdminOpen(false); setEditingEntry(null); }} />}
 
       <Footer>
-        © {new Date().getFullYear()} Chhath Puja Samiti
-        {" · "}
-        श्रद्धा • आस्था • समर्पण
+        <VisitCounter />
+        © {new Date().getFullYear()} Maa Kamleshwari Chhath Puja Samiti
+        
+       
+        
+        <div id="footer-credit" style={{ marginTop: 14, fontSize: 13 }}>
+          Made with <span role="img" aria-label="love">♥ & Maintained by</span> - Govind Choudhary
+        </div>
       </Footer>
     </Shell>
   );

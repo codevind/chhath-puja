@@ -1,7 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 *{box-sizing:border-box}
-html{min-width:320px;background:#fff9ef}
+:root {
+  color-scheme: light;
+  --puja-bg: #fff8e8;
+  --puja-surface: #fffef9;
+  --puja-surface-soft: #fff5df;
+  --puja-text: #49251e;
+  --puja-heading: #8f291d;
+  --puja-muted: #805b46;
+  --puja-primary: #aa381d;
+  --puja-primary-gradient: linear-gradient(115deg, #962b1c, #bd471b);
+  --puja-gold: #f4b53f;
+  --puja-gold-soft: #ffedbf;
+  --puja-border: #edcf96;
+  --puja-focus: #c45b1f;
+  --puja-leaf: #3f703f;
+}
+html{min-width:320px;background:var(--puja-bg)}
 body{margin:0;font-family:'DM Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
-button,input{font:inherit}
-button:focus-visible,input:focus-visible{outline:3px solid #d99a4b;outline-offset:3px}
-::selection{background:#f5d29b;color:#4b2c1b}
+button,input,select{font:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--puja-focus);outline-offset:3px}
+::selection{background:var(--puja-gold-soft);color:var(--puja-heading)}
