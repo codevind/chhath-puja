@@ -106,28 +106,28 @@ const HeroContent = styled.div`
   color: #fff8e9;
 `;
 
-const Eyebrow = styled.div`
-  font-size: 12px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #ffdda4;
-  font-weight: 700;
-`;
+// const Eyebrow = styled.div`
+//   font-size: 12px;
+//   letter-spacing: 0.2em;
+//   text-transform: uppercase;
+//   color: #ffdda4;
+//   font-weight: 700;
+// `;
 
-const HeroTitle = styled.h1`
-  font-family: Georgia, serif;
-  font-size: clamp(36px, 6vw, 64px);
-  line-height: 1.05;
-  margin: 14px 0 12px;
-`;
+// const HeroTitle = styled.h1`
+//   font-family: Georgia, serif;
+//   font-size: clamp(36px, 6vw, 64px);
+//   line-height: 1.05;
+//   margin: 14px 0 12px;
+// `;
 
-const HeroText = styled.p`
-  font-size: clamp(14px, 2vw, 17px);
-  line-height: 1.75;
-  color: #fff0d8;
-  max-width: 510px;
-  margin: 0;
-`;
+// const HeroText = styled.p`
+//   font-size: clamp(14px, 2vw, 17px);
+//   line-height: 1.75;
+//   color: #fff0d8;
+//   max-width: 510px;
+//   margin: 0;
+// `;
 
 const Welcome = styled.div`
   text-align: center;
@@ -456,8 +456,7 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const upiConfigured =
-    Boolean(SITE_CONFIG.upiId) &&
-    SITE_CONFIG.upiId !== "YOUR_UPI_ID@BANK";
+    Boolean(SITE_CONFIG.upiId) 
 
   const upiLink = useMemo(() => {
     const params = new URLSearchParams({
