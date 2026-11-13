@@ -6,7 +6,7 @@ export const SITE_CONFIG = {
   title: "माँ कमलेश्वरी छठ पूजा समिति",
   subtitle: "हरि घाट - ब्रह्म बाबा स्थान, पोखराम",
 
-  upiId : "7654483661@ybl",
+  upiId : "8700598481@yescred",
   payeeName: "Chhath Puja Samiti",
   donationNote: "Voluntary Chhath Puja contribution",
 
